@@ -93,7 +93,7 @@ html, body, #root {
 .status-label { flex: 1; }
 .status-icon { font-size: 10px; }
 
-.nav-section { padding: 6px 10px; flex: 1; }
+.nav-section { padding: 6px 10px; flex: 1; overflow-y: auto; }
 .nav-item {
   display: flex;
   align-items: center;

@@ -8,6 +8,8 @@ const NAV = [
   { id: 'crm',        label: 'CRM',            icon: Users },
   { id: 'sales',      label: 'Sales',          icon: ShoppingCart },
   { id: 'customers',  label: 'Customers',      icon: UserCircle },
+  { isHeader: true,   label: 'Accounting' },
+  { id: 'invoicing',  label: 'Invoicing',      icon: CreditCard },
   { isHeader: true,   label: 'Procurement' },
   { id: 'purchases',  label: 'Purchases',      icon: CreditCard },
   { id: 'suppliers',  label: 'Suppliers',      icon: Truck },

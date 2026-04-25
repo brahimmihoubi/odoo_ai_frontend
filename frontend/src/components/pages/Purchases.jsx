@@ -13,11 +13,21 @@ export default function Purchases() {
   const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({ partner_id: '' })
 
+  const [suppliersList, setSuppliersList] = useState([])
+
   const loadData = async () => {
     setLoading(true)
     try {
       const liveData = await getPurchasesData()
       setData(liveData)
+      
+      // Fetch suppliers for the dropdown
+      import('../../lib/api').then(async (api) => {
+        try {
+          const supps = await api.getSuppliersData()
+          setSuppliersList(supps.suppliers || [])
+        } catch(e) { console.error("Error fetching suppliers", e) }
+      })
     } catch (err) {
       console.error("Fetch error:", err)
     } finally {
@@ -31,13 +41,13 @@ export default function Purchases() {
 
   const handleOpenCreate = () => {
     setEditingId(null)
-    setFormData({ partner_id: '' })
+    setFormData({ partner_id: suppliersList.length > 0 ? suppliersList[0].id : '' })
     setShowModal(true)
   }
 
   const handleOpenEdit = (o) => {
     setEditingId(o.id)
-    setFormData({ partner_id: '' }) // Since we only have partner_id in form, we leave it blank to force re-entry or we'd fetch it.
+    setFormData({ partner_id: suppliersList.length > 0 ? suppliersList[0].id : '' }) 
     setShowModal(true)
   }
 
@@ -127,9 +137,14 @@ export default function Purchases() {
             <h2 style={{ fontSize: '18px', marginBottom: '16px' }}>{editingId ? 'Edit PO' : 'New Purchase Order'}</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Vendor (Partner ID)</label>
-                <input required type="number" className="chat-input" style={{ width: '100%' }} value={formData.partner_id} onChange={e => setFormData({...formData, partner_id: e.target.value})} placeholder="e.g. 1" />
-                <p style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px' }}>Enter the ID of the vendor from your Customers directory.</p>
+                <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Select Vendor</label>
+                <select required className="chat-input" style={{ width: '100%', cursor: 'pointer' }} value={formData.partner_id} onChange={e => setFormData({...formData, partner_id: e.target.value})}>
+                  <option value="" disabled>-- Choose a vendor --</option>
+                  {suppliersList.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px' }}>Fetched directly from Odoo Suppliers database.</p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
                 <button type="button" className="btn" style={{ background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowModal(false)}>Cancel</button>

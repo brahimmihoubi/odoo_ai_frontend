@@ -13,11 +13,21 @@ export default function Sales() {
   const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({ partner_id: '' })
 
+  const [customersList, setCustomersList] = useState([])
+
   const loadData = async () => {
     setLoading(true)
     try {
       const liveData = await getSalesData()
       setData(liveData)
+
+      // Fetch customers for the dropdown
+      import('../../lib/api').then(async (api) => {
+        try {
+          const custs = await api.getCustomersData()
+          setCustomersList(custs.customers || [])
+        } catch(e) { console.error("Error fetching customers", e) }
+      })
     } catch (err) {
       console.error("Fetch error:", err)
     } finally {
@@ -31,13 +41,13 @@ export default function Sales() {
 
   const handleOpenCreate = () => {
     setEditingId(null)
-    setFormData({ partner_id: '' })
+    setFormData({ partner_id: customersList.length > 0 ? customersList[0].id : '' })
     setShowModal(true)
   }
 
   const handleOpenEdit = (o) => {
     setEditingId(o.id)
-    setFormData({ partner_id: '' }) 
+    setFormData({ partner_id: customersList.length > 0 ? customersList[0].id : '' }) 
     setShowModal(true)
   }
 
@@ -126,9 +136,14 @@ export default function Sales() {
             <h2 style={{ fontSize: '18px', marginBottom: '16px' }}>{editingId ? 'Edit Sales Order' : 'New Sales Order'}</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Customer (Partner ID)</label>
-                <input required type="number" className="chat-input" style={{ width: '100%' }} value={formData.partner_id} onChange={e => setFormData({...formData, partner_id: e.target.value})} placeholder="e.g. 1" />
-                <p style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px' }}>Enter the ID of the customer.</p>
+                <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Select Customer</label>
+                <select required className="chat-input" style={{ width: '100%', cursor: 'pointer' }} value={formData.partner_id} onChange={e => setFormData({...formData, partner_id: e.target.value})}>
+                  <option value="" disabled>-- Choose a customer --</option>
+                  {customersList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px' }}>Fetched directly from Odoo Customers database.</p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
                 <button type="button" className="btn" style={{ background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowModal(false)}>Cancel</button>

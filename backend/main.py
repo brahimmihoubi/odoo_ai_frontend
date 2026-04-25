@@ -171,14 +171,12 @@ def get_crm_data(
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        # Fetch CRM Leads/Opportunities
         try:
             leads = models.execute_kw(ODOO_DB, uid, x_odoo_password, 'crm.lead', 'search_read',
                 [],
-                {'fields': ['name', 'expected_revenue', 'probability', 'stage_id', 'type'], 'limit': 20, 'order': 'create_date desc'}
+                {'fields': ['id', 'name', 'expected_revenue', 'probability', 'stage_id', 'type', 'partner_id'], 'limit': 20, 'order': 'create_date desc'}
             )
         except Exception:
-            # If CRM module not installed, return empty
             leads = []
 
         total_revenue = sum(l.get('expected_revenue', 0) for l in leads)
@@ -187,7 +185,9 @@ def get_crm_data(
         formatted_leads = []
         for l in leads:
             formatted_leads.append({
+                "id": l.get('id'),
                 "name": l.get('name', 'Unknown'),
+                "customer": l.get('partner_id')[1] if l.get('partner_id') else "-",
                 "type": "Opportunity" if l.get('type') == 'opportunity' else "Lead",
                 "revenue": f"${l.get('expected_revenue', 0):,.0f}",
                 "probability": f"{l.get('probability', 0)}%",
@@ -198,7 +198,7 @@ def get_crm_data(
             "crmKpi": {
                 "totalLeads": len(leads),
                 "wonLeads": len(won_leads),
-                "expectedRevenue": total_revenue,
+                "expectedRevenue": f"${total_revenue:,.0f}",
                 "winRate": f"{int((len(won_leads)/len(leads))*100)}%" if leads else "0%"
             },
             "leads": formatted_leads
@@ -206,6 +206,42 @@ def get_crm_data(
     except Exception as e:
         print(f"Error fetching Odoo CRM data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class LeadCreate(BaseModel):
+    name: str
+    expected_revenue: float
+    partner_id: int
+
+@app.post("/api/crm")
+def create_crm_lead(req: LeadCreate, x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    uid, models = get_odoo_connection(x_odoo_user, x_odoo_password)
+    if not uid: raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        new_id = models.execute_kw(ODOO_DB, uid, x_odoo_password, 'crm.lead', 'create', [{
+            'name': req.name, 'expected_revenue': req.expected_revenue, 'partner_id': req.partner_id, 'type': 'opportunity'
+        }])
+        return {"status": "success", "id": new_id}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/crm/{lead_id}")
+def update_crm_lead(lead_id: int, req: LeadCreate, x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    uid, models = get_odoo_connection(x_odoo_user, x_odoo_password)
+    if not uid: raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        models.execute_kw(ODOO_DB, uid, x_odoo_password, 'crm.lead', 'write', [[lead_id], {
+            'name': req.name, 'expected_revenue': req.expected_revenue, 'partner_id': req.partner_id
+        }])
+        return {"status": "success"}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/crm/{lead_id}")
+def delete_crm_lead(lead_id: int, x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    uid, models = get_odoo_connection(x_odoo_user, x_odoo_password)
+    if not uid: raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        models.execute_kw(ODOO_DB, uid, x_odoo_password, 'crm.lead', 'unlink', [[lead_id]])
+        return {"status": "success"}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/customers")
 def get_customers_data(
@@ -581,6 +617,41 @@ def delete_sale(so_id: int, x_odoo_user: str = Header(...), x_odoo_password: str
     try:
         models.execute_kw(ODOO_DB, uid, x_odoo_password, 'sale.order', 'unlink', [[so_id]])
         return {"status": "success"}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/invoices")
+def get_invoices_data(x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    uid, models = get_odoo_connection(x_odoo_user, x_odoo_password)
+    if not uid: raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        moves = models.execute_kw(ODOO_DB, uid, x_odoo_password, 'account.move', 'search_read',
+            [[('move_type', '=', 'out_invoice')]],
+            {'fields': ['id', 'name', 'partner_id', 'amount_total', 'amount_residual', 'state', 'payment_state', 'invoice_date'], 'limit': 50, 'order': 'id desc'}
+        )
+        formatted_invoices = []
+        for m in moves:
+            formatted_invoices.append({
+                "id": m.get('id'),
+                "ref": m.get('name'),
+                "customer": m.get('partner_id')[1] if m.get('partner_id') else "Unknown",
+                "total": m.get('amount_total', 0),
+                "due": m.get('amount_residual', 0),
+                "state": m.get('state'),
+                "payment_state": m.get('payment_state') or 'not_paid',
+                "date": m.get('invoice_date') or "Draft"
+            })
+        return {"invoices": formatted_invoices}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/invoices/{invoice_id}/pay")
+def pay_invoice(invoice_id: int, x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    # To truly pay an invoice in Odoo via XML-RPC requires registering a payment on the account.payment model.
+    # For this endpoint, we'll try to action_post it if it's draft, as an example of a state change operation.
+    uid, models = get_odoo_connection(x_odoo_user, x_odoo_password)
+    if not uid: raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        models.execute_kw(ODOO_DB, uid, x_odoo_password, 'account.move', 'action_post', [[invoice_id]])
+        return {"status": "success", "message": "Invoice posted successfully"}
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/ai/generate-report")

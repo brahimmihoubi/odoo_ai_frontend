@@ -254,3 +254,51 @@ export async function deleteSupplier(id) {
   if (!res.ok) throw new Error('Failed to delete supplier')
   return res.json()
 }
+
+// INVOICING CRUD & EXPORT
+export async function getInvoicesData() {
+  const res = await fetch(`${BACKEND}/api/invoices`, {
+    headers: getAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Invoices data error')
+  return res.json()
+}
+
+export async function postInvoice(id) {
+  const res = await fetch(`${BACKEND}/api/invoices/${id}/pay`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to post/pay invoice')
+  return res.json()
+}
+
+// CRM CRUD
+export async function createLead(data) {
+  const res = await fetch(`${BACKEND}/api/crm`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  })
+  if (!res.ok) throw new Error('Failed to create lead')
+  return res.json()
+}
+
+export async function updateLead(id, data) {
+  const res = await fetch(`${BACKEND}/api/crm/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  })
+  if (!res.ok) throw new Error('Failed to update lead')
+  return res.json()
+}
+
+export async function deleteLead(id) {
+  const res = await fetch(`${BACKEND}/api/crm/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to delete lead')
+  return res.json()
+}

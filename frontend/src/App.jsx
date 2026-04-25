@@ -4,6 +4,7 @@ import Overview from './components/pages/Overview'
 import Sales from './components/pages/Sales'
 import CRM from './components/pages/CRM'
 import Customers from './components/pages/Customers'
+import Invoicing from './components/pages/Invoicing'
 import Purchases from './components/pages/Purchases'
 import Companies from './components/pages/Companies'
 import Inventory from './components/pages/Inventory'
@@ -16,6 +17,7 @@ const PAGES = {
   sales:     <Sales />,
   crm:       <CRM />,
   customers: <Customers />,
+  invoicing: <Invoicing />,
   purchases: <Purchases />,
   companies: <Companies />,
   inventory: <Inventory />,
