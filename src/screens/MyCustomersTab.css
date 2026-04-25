@@ -1,0 +1,28 @@
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.data-table th {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid var(--border-color);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 13px;
+}
+.data-table td {
+  padding: 16px;
+  border-bottom: 0.5px solid var(--border-color);
+  vertical-align: middle;
+}
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+.sup-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+.sup-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}

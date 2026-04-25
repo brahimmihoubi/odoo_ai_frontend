@@ -1,0 +1,48 @@
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 8px 12px;
+  border-bottom: 0.5px solid var(--border-color);
+}
+
+.data-table td {
+  padding: 16px 12px;
+  font-size: 13px;
+  border-bottom: 0.5px solid #f0ede8;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sup-name {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.sup-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.stars {
+  color: #d97706;
+  font-size: 13px;
+  letter-spacing: 1px;
+}

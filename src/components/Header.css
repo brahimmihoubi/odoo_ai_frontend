@@ -1,0 +1,17 @@
+.header {
+  height: 60px;
+  background-color: var(--card-bg);
+  border-bottom: 0.5px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px;
+  z-index: 90;
+  position: sticky;
+  top: 0;
+}
+
+.status-pills {
+  display: flex;
+  gap: 8px;
+}

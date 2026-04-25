@@ -1,0 +1,65 @@
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.inv-card {
+  padding: 18px;
+}
+
+.inv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.inv-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.progress-track {
+  height: 5px;
+  background-color: #f0ede8;
+  border-radius: 10px;
+  margin: 10px 0 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 10px;
+}
+
+.bg-red { background-color: #ef4444; }
+.bg-amber { background-color: #f59e0b; }
+.bg-green { background-color: #22c55e; }
+
+.inv-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.inv-units {
+  font-family: 'DM Mono', monospace;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+@media (max-width: 900px) {
+  .inv-grid {
+    grid-template-columns: 1fr;
+  }
+}
