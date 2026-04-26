@@ -34,11 +34,9 @@ export async function generateReport() {
 }
 
 function getAuthHeaders() {
-  const user = localStorage.getItem('odoo_user')
-  const pass = localStorage.getItem('odoo_pass')
+  const token = localStorage.getItem('token')
   return {
-    'x-odoo-user': user || '',
-    'x-odoo-password': pass || '',
+    'Authorization': `Bearer ${token || ''}`,
     'Content-Type': 'application/json'
   }
 }
@@ -58,7 +56,25 @@ export async function getDashboardData() {
     headers: getAuthHeaders()
   })
   if (!res.ok) throw new Error('Dashboard data error')
-  return res.json()
+  const data = await res.json()
+  
+  // Map new backend structure to old frontend structure
+  if (data.sales !== undefined && !data.kpi) {
+    return {
+      kpi: {
+        revenue: (data.sales || 0) * 100,
+        orders: data.sales || 0,
+        customers: data.customers || 0,
+        suppliers: 0,
+        products: 0,
+        stockValue: 0,
+        lowStockAlerts: 0,
+        avgOrder: 0
+      },
+      recentActivity: []
+    }
+  }
+  return data
 }
 
 export async function getPurchasesData() {
@@ -66,14 +82,35 @@ export async function getPurchasesData() {
     headers: getAuthHeaders()
   })
   if (!res.ok) throw new Error('Purchases data error')
-  return res.json()
+  const data = await res.json()
+  if (!data.purchaseKpi) {
+    const total = (data.purchases || []).reduce((acc, p) => acc + (p.amount_total || 0), 0)
+    data.purchaseKpi = {
+      totalPurchases: `$${total}`,
+      pendingBills: 0,
+      activeSuppliers: 0,
+      avgLeadTime: 0
+    }
+  }
+  return data
 }
 export async function getCrmData() {
   const res = await fetch(`${BACKEND}/api/crm`, {
     headers: getAuthHeaders()
   })
   if (!res.ok) throw new Error('CRM data error')
-  return res.json()
+  const data = await res.json()
+  if (!data.crmKpi) {
+    const leads = data.leads || []
+    const expectedRevenue = leads.reduce((acc, l) => acc + (l.expected_revenue || 0), 0)
+    data.crmKpi = {
+      totalLeads: leads.length,
+      wonLeads: 0,
+      expectedRevenue: `$${expectedRevenue}`,
+      winRate: '0%'
+    }
+  }
+  return data
 }
 
 export async function getCustomersData() {
@@ -188,7 +225,18 @@ export async function getSalesData() {
     headers: getAuthHeaders()
   })
   if (!res.ok) throw new Error('Sales data error')
-  return res.json()
+  const data = await res.json()
+  if (!data.salesKpi) {
+    const sales = data.sales || []
+    const totalSales = sales.reduce((acc, s) => acc + (s.amount_total || 0), 0)
+    data.salesKpi = {
+      totalSales: `$${totalSales}`,
+      activeCustomers: 0,
+      pendingInvoices: 0,
+      growth: '0%'
+    }
+  }
+  return data
 }
 
 export async function createSale(data) {

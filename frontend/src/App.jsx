@@ -27,7 +27,7 @@ const PAGES = {
 
 export default function App() {
   const [active, setActive] = useState('overview')
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('odoo_user'))
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (!isAuthenticated) {
@@ -48,8 +48,8 @@ export default function App() {
         active={active} 
         setActive={handleNav} 
         onLogout={() => {
+          localStorage.removeItem('token')
           localStorage.removeItem('odoo_user')
-          localStorage.removeItem('odoo_pass')
           setIsAuthenticated(false)
         }} 
       />
