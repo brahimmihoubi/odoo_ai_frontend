@@ -655,31 +655,27 @@ def pay_invoice(invoice_id: int, x_odoo_user: str = Header(...), x_odoo_password
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/ai/generate-report")
-def generate_report():
-    # Here you would typically fetch live Odoo data first, then pass it to Ollama
-    # For now, we simulate sending context to Ollama to generate a summary report.
-    
+def generate_report(x_odoo_user: str = Header(...), x_odoo_password: str = Header(...)):
+    try:
+        sales_data = get_sales_data(x_odoo_user, x_odoo_password)
+        sales_kpi = sales_data.get('salesKpi', {})
+        purchases_data = get_purchases_data(x_odoo_user, x_odoo_password)
+        purchases_kpi = purchases_data.get('purchaseKpi', {})
+        crm_data = get_crm_data(x_odoo_user, x_odoo_password)
+        crm_kpi = crm_data.get('crmKpi', {})
+        
+        data_context = f"REAL DATA: Sales: {sales_kpi.get('totalSales', '$0')}. Purchases: {purchases_kpi.get('totalPurchases', '$0')}. CRM Pipeline: {crm_kpi.get('totalLeads', 0)} leads, Win Rate {crm_kpi.get('winRate', '0%')}."
+    except Exception as e:
+        data_context = "Could not fetch live data from Odoo."
+
     date_str = datetime.datetime.now().strftime("%B %d, %Y %H:%M")
-    
-    prompt = f"""You are OdooAI. Generate a brief, professional daily business report formatted EXACTLY like this:
-    
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DAILY BUSINESS REPORT
-Generated: {date_str}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    prompt = f"""You are OdooAI, an expert ERP analyst. Generate a professional daily report based ONLY on this real data:
 
-SALES OVERVIEW
-...
+{data_context}
 
-INVENTORY STATUS
-...
+Do NOT invent numbers. Keep it concise."""
 
-RECOMMENDATIONS
-...
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Make up realistic numbers for Sales ($97k), Orders (1), Inventory (4 items), etc. Keep it under 200 words.
-"""
 
     try:
         payload = {

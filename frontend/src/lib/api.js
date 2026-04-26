@@ -25,8 +25,11 @@ export async function sendChat(message, onChunk) {
 }
 
 export async function generateReport() {
-  const res = await fetch(`${BACKEND}/ai/generate-report`, { method: 'POST' })
-  if (!res.ok) throw new Error('Report error')
+  const res = await fetch(`${BACKEND}/ai/generate-report`, { 
+    method: 'POST',
+    headers: getAuthHeaders()
+  })
+  if (!res.ok) throw new Error('AI report failed')
   return res.json()
 }
 

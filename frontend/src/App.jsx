@@ -28,25 +28,44 @@ const PAGES = {
 export default function App() {
   const [active, setActive] = useState('overview')
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('odoo_user'))
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (!isAuthenticated) {
     return <Login onLoginSuccess={() => setIsAuthenticated(true)} />
   }
 
+  const handleNav = (page) => {
+    setActive(page)
+    setSidebarOpen(false)
+  }
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+      
       <Sidebar 
         active={active} 
-        setActive={setActive} 
+        setActive={handleNav} 
         onLogout={() => {
           localStorage.removeItem('odoo_user')
           localStorage.removeItem('odoo_pass')
           setIsAuthenticated(false)
         }} 
       />
-      <main className="main-content">
-        {PAGES[active]}
-      </main>
+
+      <div className="main-wrapper" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <div className="mobile-topbar">
+          <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div className="mobile-topbar-title">OdooAI Dashboard</div>
+        </div>
+
+        <main className="main-content">
+          {PAGES[active]}
+        </main>
+      </div>
     </div>
   )
 }

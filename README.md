@@ -1,62 +1,147 @@
-# Odoo AI Dashboard
+# Odoo AI Frontend Documentation
 
-A professional, decoupled frontend and backend ecosystem designed to extend the capabilities of Odoo ERP. This system provides a dynamic, responsive dashboard featuring comprehensive CRUD capabilities linked directly to live Odoo data, powered by a FastAPI backend and a React frontend, with integrated local artificial intelligence through Ollama.
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Architecture Overview](#architecture-overview)
+3. [Technology Stack](#technology-stack)
+4. [Project Directory Structure](#project-directory-structure)
+5. [Key Features](#key-features)
+6. [Setup and Installation](#setup-and-installation)
+7. [Configuration](#configuration)
+8. [Responsive Design & UI](#responsive-design--ui)
+9. [Deployment](#deployment)
+
+---
+
+## Introduction
+
+The **Odoo AI Frontend** is a modern, high-performance Single Page Application (SPA) designed to serve as the user interface for our Odoo ERP integration. Built with **React** and **Vite**, it completely replaces the traditional Odoo QWeb views with a fast, dynamic, and fully responsive dashboard. It connects securely to the Odoo FastAPI backend middleware to read and write ERP data in real-time, and integrates an AI Assistant powered by Ollama.
+
+---
 
 ## Architecture Overview
 
-The system operates on a modernized, separated architecture rather than traditional Odoo QWeb views:
+The frontend operates as an independent, decoupled client:
+- **Routing & State:** Managed internally within React, allowing seamless page transitions without browser reloads.
+- **Data Fetching:** API calls are organized within the `src/lib/api.js` service layer, which communicates directly with the FastAPI backend using standard HTTP requests and JWT/Basic Auth headers.
+- **Component Design:** The UI is modular. Reusable components (buttons, headers, modals) are separated from the main Page components (CRM, Sales, Inventory), ensuring a scalable codebase.
 
-1.  **Frontend (React & Vite):** A high-performance single-page application that provides an intuitive interface for business modules. It handles session management, routing, and renders data fetched from the backend.
-2.  **Backend (FastAPI):** A fast, asynchronous Python web server that acts as a secure middleware. It receives HTTP requests from the frontend, translates them into Odoo XML-RPC protocols, and manages the AI orchestration.
-3.  **ERP Core (Odoo 18):** The central database and logic engine (`odoo18_db`). The backend connects to Odoo via secure XML-RPC `execute_kw` calls to fetch, create, update, and delete real records.
-4.  **AI Engine (Ollama):** A locally hosted language model server used for generating dynamic business reports and providing a streaming chatbot assistant capable of analyzing Odoo data.
+---
+
+## Technology Stack
+
+- **Core Framework:** [React 18](https://react.dev/)
+- **Build Tool:** [Vite](https://vitejs.dev/) for extremely fast Hot Module Replacement (HMR) and optimized builds.
+- **Styling:** Vanilla CSS (`globals.css`) leveraging CSS Variables for consistent theming and dark/light modes.
+- **Icons:** SVG-based icons for scalable, lightweight visuals.
+
+---
+
+## Project Directory Structure
+
+```text
+odoo_ai_frontend/
+├── index.html              # Main HTML entry point
+├── package.json            # NPM dependencies and scripts
+├── vite.config.js          # Vite bundler configuration
+├── start.sh                # Concurrent startup script
+└── src/                    # Source code root
+    ├── main.jsx            # React DOM mounting point
+    ├── App.jsx             # Root component and application routing
+    ├── hooks/              # Custom React hooks
+    │   └── useClock.js     # Live clock hook for the PageHeader
+    ├── lib/                # Utility and service layers
+    │   └── api.js          # Centralized API fetch methods
+    ├── styles/             # Global stylesheets
+    │   └── globals.css     # CSS Variables, resets, utility classes, media queries
+    └── components/         # React component library
+        ├── layout/         # Structural components
+        │   ├── Sidebar.jsx # Navigation menu
+        │   └── PageHeader.jsx # Reusable page title bar
+        ├── shared/         # Reusable UI elements
+        │   └── KpiCard.jsx # Standardized KPI widget
+        └── pages/          # Full page views matching the sidebar routes
+            ├── AIAssistant.jsx
+            ├── Companies.jsx
+            ├── CRM.jsx
+            ├── Customers.jsx
+            ├── Inventory.jsx
+            ├── Invoicing.jsx
+            ├── Login.jsx
+            ├── Overview.jsx
+            ├── Purchases.jsx
+            ├── Sales.jsx
+            └── Suppliers.jsx
+```
+
+---
 
 ## Key Features
 
-### Live ERP Integration (XML-RPC)
-The system does not use mock data. All business modules perform real-time interactions with the Odoo database. The backend authenticates sessions and leverages Odoo's `search_read`, `create`, `write`, and `unlink` methods on native models (e.g., `res.partner`, `sale.order`, `purchase.order`, `res.company`).
+1. **Live ERP Integration:** The UI does not use mock data. Every table, dropdown, and KPI card fetches real-time records (Sales, Purchases, CRM leads) from the Odoo database via the backend API.
+2. **Relational Dropdowns:** When creating a new CRM Lead or Sales Order, the UI fetches and populates actual Odoo Customers/Suppliers into the selection menus.
+3. **AI Assistant Integration:** A dedicated chat interface communicates with a local Ollama instance to provide dynamic ERP insights and generate executive daily business reports based purely on live metrics.
+4. **Export & Print Capabilities:** The Invoicing and Reporting modules feature native client-side functions to export tables to CSV or trigger PDF print views.
 
-### Comprehensive Business Modules
-Full CRUD (Create, Read, Update, Delete) operations are implemented for the following sectors:
-*   **CRM (Pipeline):** Manage sales pipelines, expected revenues, and lead stages (`crm.lead`).
-*   **Sales:** Track recent transactions and generate new sales orders (`sale.order`).
-*   **Customers:** Maintain the central address book and individual client profiles (`res.partner`).
-*   **Purchases:** Oversee vendor bills, PO tracking, and procurement execution (`purchase.order`).
-*   **Suppliers:** Manage vendor relationships and supply chain contact data (`res.partner` with `supplier_rank`).
-*   **Companies:** Administer multi-company environments and organizational structures (`res.company`).
-*   **Dynamic Navigation:** A categorized, collapsible sidebar allowing users to toggle visibility of business domains.
+---
 
-### Secure Authentication
-The system mandates user authentication. The frontend login portal requests Odoo credentials, which are verified by the backend against the Odoo database. Validated credentials are encrypted in local storage and passed securely via headers for all subsequent API requests.
+## Setup and Installation
 
-### Artificial Intelligence Capabilities
-The integrated AI assistant operates via an Ollama instance running locally. The backend streams responses to the frontend in real-time, providing word-by-word generation without latency. The system leverages local models (e.g., `llama3.2:1b`) to generate daily business reports and interact directly with users regarding their ERP data, ensuring data privacy by keeping computations on-premise.
+### 1. Prerequisites
+- **Node.js:** v16.0.0 or higher.
+- **Backend:** The Odoo FastAPI backend must be running simultaneously to provide data.
 
-## Technical Stack
+### 2. Installation
+Navigate to the frontend directory and install the necessary NPM packages:
+```bash
+cd odoo_ai_frontend/frontend
+npm install
+```
 
-*   **Frontend Environment:** React 18, Vite, Vanilla CSS
-*   **Backend Environment:** Python 3.10+, FastAPI, Uvicorn, XML-RPC
-*   **Database/ERP:** Odoo 18
-*   **AI Engine:** Ollama
+### 3. Running the Development Server
+You can start the frontend independently via NPM:
+```bash
+npm run dev
+```
+Alternatively, you can run the provided shell script from the project root which starts both the frontend and backend concurrently:
+```bash
+./start.sh
+```
+The application will be accessible at `http://localhost:3000`.
 
-## Startup Instructions
+---
 
-### Prerequisites
-*   Node.js (v12.22.9 or compatible LTS required for build consistency)
-*   Python 3.10 or higher
-*   A running instance of Odoo 18 (defaulting to `odoo18_db` on port 8069)
-*   A running instance of Ollama (defaulting to port 11434)
+## Configuration
 
-### Execution
+### API Endpoints
+Currently, the backend URL is configured within `src/lib/api.js`. If your backend is hosted on a different port or remote server, update the `BACKEND` constant:
 
-The project includes a bash script that handles the concurrent initialization of both the backend and frontend servers.
+```javascript
+// src/lib/api.js
+const BACKEND = "http://localhost:8000"
+```
 
-1.  Navigate to the project root directory.
-2.  Ensure the script is executable:
-    `chmod +x start.sh`
-3.  Execute the startup script:
-    `./start.sh`
+### Vite Configuration
+The Vite bundler is configured in `vite.config.js`. It includes configurations to run the server on port `3000` and disables the HMR error overlay to prevent crash screens during background execution.
 
-The script will automatically activate the Python virtual environment, install missing backend dependencies via pip, launch the FastAPI server on port 8000, and start the React Vite development server.
+---
 
-Access the dashboard by navigating to the local address provided in the terminal (typically `http://localhost:5173`). You will be required to authenticate using your active Odoo database credentials.
+## Responsive Design & UI
+
+The frontend is built with a **Modern Mobile-First** approach:
+- **Mobile Topbar:** On mobile devices (`<768px`), the standard persistent sidebar is hidden. Instead, a sleek top navigation bar appears containing a hamburger menu toggle.
+- **Glassmorphism Overlays:** Opening the sidebar on mobile blurs the background content for a premium aesthetic.
+- **Adaptive KPI Grids:** Grids automatically collapse from 4 columns on desktop, to 2 on tablets, and 1 on mobile screens.
+- **Swipeable Tables:** Data-heavy tables are wrapped in an `overflow-x` container, allowing horizontal swiping on mobile devices without breaking the page layout.
+
+---
+
+## Deployment
+
+To prepare the frontend for a production environment, generate a static build using Vite:
+
+```bash
+npm run build
+```
+
+This command will bundle the React application, minify the CSS/JS, and output the optimized static files into the `dist/` directory. These files can then be served by any standard web server, such as **Nginx**, **Apache**, or a static hosting platform (e.g., Vercel, Netlify).
