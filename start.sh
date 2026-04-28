@@ -4,11 +4,11 @@ echo "Starting OdooAI Dashboard..."
 
 # 1. Start the FastAPI Backend
 echo "➔ Starting FastAPI backend on port 8000..."
-cd backend
+cd ~/odoo_ia_backend
 source venv/bin/activate
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload > /dev/null 2>&1 &
 BACKEND_PID=$!
-cd ..
+cd /home/barhoum/odoo_ai_frontend
 
 # 2. Start the React Frontend
 echo "➔ Starting React frontend on port 3000..."

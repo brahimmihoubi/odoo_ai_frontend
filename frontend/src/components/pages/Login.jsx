@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { login } from '../../api/auth'
+import { loginOdoo } from '../../lib/api'
 
 export default function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('admin')
@@ -13,25 +13,17 @@ export default function Login({ onLoginSuccess }) {
     setError('')
 
     try {
-      // ✅ call backend (JWT)
-      const token = await login(username, password)
-
-      // ✅ store token ONLY
-      localStorage.setItem('token', token)
-
-      // optional: store username (not sensitive)
+      const result = await loginOdoo(username, password)
+      // result = { access_token, token_type }
+      localStorage.setItem('token', result.access_token)
       localStorage.setItem('odoo_user', username)
 
-      // ✅ continue app flow
       if (onLoginSuccess) {
         onLoginSuccess()
-      } else {
-        window.location.href = '/dashboard'
       }
-
     } catch (err) {
       console.error(err)
-      setError('Invalid credentials or server error')
+      setError(err.message || 'Invalid credentials or server error')
     } finally {
       setLoading(false)
     }

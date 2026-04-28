@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useHealth } from '../../hooks/useHealth'
+import ThemeToggle from '../shared/ThemeToggle'
 import { LayoutDashboard, ShoppingCart, Users, UserCircle, CreditCard, Package, Truck, Bot, Building, ChevronDown, ChevronRight } from 'lucide-react'
 
 const NAV = [
@@ -109,6 +110,7 @@ export default function Sidebar({ active, setActive, onLogout }) {
           <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{username}</div>
           <div className="user-role">Administrator</div>
         </div>
+        <ThemeToggle />
         <button 
           onClick={onLogout}
           style={{

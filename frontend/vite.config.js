@@ -6,6 +6,6 @@ export default defineConfig({
   clearScreen: false,
   server: { 
     port: 3000,
-    hmr: { overlay: false }
+    hmr: { overlay: true }
   },
 })
