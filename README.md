@@ -49,7 +49,8 @@ odoo_ai_frontend/
     ├── main.jsx            # React DOM mounting point
     ├── App.jsx             # Root component and application routing
     ├── hooks/              # Custom React hooks
-    │   └── useClock.js     # Live clock hook for the PageHeader
+    │   ├── useClock.js     # Live clock hook for the PageHeader
+    │   └── useTheme.jsx    # Global Theme Provider and context
     ├── lib/                # Utility and service layers
     │   └── api.js          # Centralized API fetch methods
     ├── styles/             # Global stylesheets
@@ -59,7 +60,8 @@ odoo_ai_frontend/
         │   ├── Sidebar.jsx # Navigation menu
         │   └── PageHeader.jsx # Reusable page title bar
         ├── shared/         # Reusable UI elements
-        │   └── KpiCard.jsx # Standardized KPI widget
+        │   ├── KpiCard.jsx # Standardized KPI widget
+        │   └── ThemeToggle.jsx # Dark/Light mode toggle switch
         └── pages/          # Full page views matching the sidebar routes
             ├── AIAssistant.jsx
             ├── Companies.jsx
@@ -82,6 +84,7 @@ odoo_ai_frontend/
 2. **Relational Dropdowns:** When creating a new CRM Lead or Sales Order, the UI fetches and populates actual Odoo Customers/Suppliers into the selection menus.
 3. **AI Assistant Integration:** A dedicated chat interface communicates with a local Ollama instance to provide dynamic ERP insights and generate executive daily business reports based purely on live metrics.
 4. **Export & Print Capabilities:** The Invoicing and Reporting modules feature native client-side functions to export tables to CSV or trigger PDF print views.
+5. **Dynamic Theme System:** Fully integrated Dark/Light mode toggle utilizing React Context (`useTheme`). The system syncs user preferences directly with the Odoo backend (`res.users`), ensuring state persists across sessions and devices.
 
 ---
 
