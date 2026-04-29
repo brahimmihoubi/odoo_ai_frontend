@@ -1,4 +1,4 @@
-const BACKEND = 'http://localhost:5000'
+const BACKEND = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // ─── Auth helper ─────────────────────────────────────────────────────────────
 function getAuthHeaders() {
@@ -14,6 +14,12 @@ async function apiFetch(path, options = {}) {
     ...options,
     headers: { ...getAuthHeaders(), ...(options.headers || {}) }
   })
+  if (res.status === 401) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('odoo_user')
+    window.location.href = '/'
+    throw new Error('Session expired')
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || `Request failed: ${res.status}`)
@@ -23,7 +29,6 @@ async function apiFetch(path, options = {}) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function many2one(field) {
-  // Odoo many2one fields come as [id, "Name"] or false
   if (!field) return '—'
   return Array.isArray(field) ? field[1] : field
 }
@@ -52,18 +57,18 @@ export async function getDashboardData() {
 
   return {
     kpi: {
-      revenue:           kpis.total_revenue        || 0,
-      orders:            kpis.total_sales          || 0,
-      confirmedSales:    kpis.confirmed_sales       || 0,
-      customers:         kpis.total_customers      || 0,
-      suppliers:         kpis.total_suppliers      || 0,
-      totalLeads:        kpis.total_leads          || 0,
-      totalInvoices:     kpis.total_invoices       || 0,
-      unpaidInvoices:    kpis.unpaid_invoices      || 0,
-      totalBills:        kpis.total_bills          || 0,
-      totalPurchases:    kpis.total_purchases      || 0,
-      confirmedPurchases:kpis.confirmed_purchases  || 0,
-      totalOutstanding:  kpis.total_outstanding    || 0,
+      revenue:            kpis.total_revenue        || 0,
+      orders:             kpis.total_sales          || 0,
+      confirmedSales:     kpis.confirmed_sales       || 0,
+      customers:          kpis.total_customers      || 0,
+      suppliers:          kpis.total_suppliers      || 0,
+      totalLeads:         kpis.total_leads          || 0,
+      totalInvoices:      kpis.total_invoices       || 0,
+      unpaidInvoices:     kpis.unpaid_invoices      || 0,
+      totalBills:         kpis.total_bills          || 0,
+      totalPurchases:     kpis.total_purchases      || 0,
+      confirmedPurchases: kpis.confirmed_purchases  || 0,
+      totalOutstanding:   kpis.total_outstanding    || 0,
     },
     recentSales: (data.recent_sales || []).map(s => ({
       id:       s.id,
@@ -89,7 +94,6 @@ export async function getDashboardData() {
       stage:    many2one(l.stage_id),
       date:     l.create_date ? l.create_date.substring(0, 10) : '—',
     })),
-    // recentActivity maps the most recent sales into the format Overview.jsx expects
     recentActivity: (data.recent_sales || []).map(s => ({
       type:    'Sale',
       ref:     s.name || `SO${s.id}`,
@@ -112,18 +116,18 @@ export async function getSalesData(params = {}) {
     total: data.total || salesList.length,
     salesKpi: {
       totalSales:      totalRevenue,
-      confirmedOrders: salesList.filter(s => ['sale','done'].includes(s.state)).length,
+      confirmedOrders: salesList.filter(s => ['sale', 'done'].includes(s.state)).length,
       draftOrders:     salesList.filter(s => s.state === 'draft').length,
       growth:          '—'
     },
     salesOrders: salesList.map(s => ({
-      id:       s.id,
-      ref:      s.name || `SO${s.id}`,
-      customer: many2one(s.partner_id),
-      total:    formatCurrency(s.amount_total),
-      untaxed:  formatCurrency(s.amount_untaxed),
-      currency: many2one(s.currency_id),
-      state:    s.state || '—',
+      id:            s.id,
+      ref:           s.name || `SO${s.id}`,
+      customer:      many2one(s.partner_id),
+      total:         formatCurrency(s.amount_total),
+      untaxed:       formatCurrency(s.amount_untaxed),
+      currency:      many2one(s.currency_id),
+      state:         s.state || '—',
       invoiceStatus: s.invoice_status || '—',
       salesperson:   many2one(s.user_id),
       date:          s.date_order ? s.date_order.substring(0, 10) : '—',
@@ -153,19 +157,19 @@ export async function getPurchasesData(params = {}) {
   return {
     total: data.total || list.length,
     purchaseKpi: {
-      totalPurchases:    total,
-      confirmedOrders:   list.filter(p => ['purchase','done'].includes(p.state)).length,
-      pendingOrders:     list.filter(p => p.state === 'draft').length,
-      avgLeadTime:       '—'
+      totalPurchases:  total,
+      confirmedOrders: list.filter(p => ['purchase', 'done'].includes(p.state)).length,
+      pendingOrders:   list.filter(p => p.state === 'draft').length,
+      avgLeadTime:     '—'
     },
     purchaseOrders: list.map(p => ({
-      id:       p.id,
-      ref:      p.name || `PO${p.id}`,
-      supplier: many2one(p.partner_id),
-      total:    formatCurrency(p.amount_total),
-      untaxed:  formatCurrency(p.amount_untaxed),
-      currency: many2one(p.currency_id),
-      state:    p.state || '—',
+      id:            p.id,
+      ref:           p.name || `PO${p.id}`,
+      supplier:      many2one(p.partner_id),
+      total:         formatCurrency(p.amount_total),
+      untaxed:       formatCurrency(p.amount_untaxed),
+      currency:      many2one(p.currency_id),
+      state:         p.state || '—',
       invoiceStatus: p.invoice_status || '—',
       date:          p.date_order ? p.date_order.substring(0, 10) : '—',
       datePlanned:   p.date_planned ? p.date_planned.substring(0, 10) : '—',
@@ -203,20 +207,20 @@ export async function getCrmData(params = {}) {
                          : '0%'
     },
     leads: leads.map(l => ({
-      id:          l.id,
-      name:        l.name,
-      customer:    many2one(l.partner_id),
-      stage:       many2one(l.stage_id),
-      revenue:     formatCurrency(l.expected_revenue),
+      id:               l.id,
+      name:             l.name,
+      customer:         many2one(l.partner_id),
+      stage:            many2one(l.stage_id),
+      revenue:          formatCurrency(l.expected_revenue),
       expected_revenue: l.expected_revenue || 0,
-      probability: l.probability || 0,
-      priority:    l.priority || '0',
-      salesperson: many2one(l.user_id),
-      email:       l.email_from || '—',
-      phone:       l.phone || '—',
-      type:        l.type || '—',
-      deadline:    l.date_deadline || '—',
-      date:        l.create_date ? l.create_date.substring(0, 10) : '—',
+      probability:      l.probability || 0,
+      priority:         l.priority || '0',
+      salesperson:      many2one(l.user_id),
+      email:            l.email_from || '—',
+      phone:            l.phone || '—',
+      type:             l.type || '—',
+      deadline:         l.date_deadline || '—',
+      date:             l.create_date ? l.create_date.substring(0, 10) : '—',
     }))
   }
 }
@@ -242,18 +246,18 @@ export async function getCustomersData(params = {}) {
   return {
     total: data.total || list.length,
     customers: list.map(c => ({
-      id:           c.id,
-      name:         c.name   || '—',
-      email:        c.email  || '—',
-      phone:        c.phone  || '—',
-      mobile:       c.mobile || '—',
-      city:         c.city   || '—',
-      country:      many2one(c.country_id),
-      vat:          c.vat    || '—',
-      website:      c.website|| '—',
-      salesOrders:  c.sale_order_count     || 0,
-      purchases:    c.purchase_order_count || 0,
-      since:        c.create_date ? c.create_date.substring(0, 10) : '—',
+      id:          c.id,
+      name:        c.name    || '—',
+      email:       c.email   || '—',
+      phone:       c.phone   || '—',
+      mobile:      c.mobile  || '—',
+      city:        c.city    || '—',
+      country:     many2one(c.country_id),
+      vat:         c.vat     || '—',
+      website:     c.website || '—',
+      salesOrders: c.sale_order_count     || 0,
+      purchases:   c.purchase_order_count || 0,
+      since:       c.create_date ? c.create_date.substring(0, 10) : '—',
     }))
   }
 }
@@ -280,13 +284,13 @@ export async function getSuppliersData(params = {}) {
     total: data.total || list.length,
     supplierKpi: {
       activeSuppliers: list.length,
-      newPartners:     list.filter(s => {
+      newPartners: list.filter(s => {
         if (!s.create_date) return false
         const d = new Date(s.create_date)
         const now = new Date()
         return (now - d) / 86400000 <= 30
       }).length,
-      avgRating:  '—',
+      avgRating:   '—',
       avgLeadTime: '—'
     },
     suppliers: list.map(s => ({
@@ -323,16 +327,16 @@ export async function getCompaniesData() {
   return {
     companies: list.map(c => ({
       id:       c.id,
-      name:     c.name     || '—',
-      email:    c.email    || '—',
-      phone:    c.phone    || '—',
-      street:   c.street   || '—',
-      city:     c.city     || '—',
-      zip:      c.zip      || '—',
+      name:     c.name    || '—',
+      email:    c.email   || '—',
+      phone:    c.phone   || '—',
+      street:   c.street  || '—',
+      city:     c.city    || '—',
+      zip:      c.zip     || '—',
       country:  many2one(c.country_id),
       currency: many2one(c.currency_id),
-      vat:      c.vat      || '—',
-      website:  c.website  || '—',
+      vat:      c.vat     || '—',
+      website:  c.website || '—',
     }))
   }
 }
@@ -397,12 +401,21 @@ export async function postInvoice(id) {
   return apiFetch(`/api/invoices/${id}/pay`, { method: 'POST' })
 }
 
-// ─── AI / Other ───────────────────────────────────────────────────────────────
+// ─── AI ───────────────────────────────────────────────────────────────────────
 export async function sendChat(message, onChunk) {
-  const res = await fetch(`${BACKEND}/ai/chat?message=${encodeURIComponent(message)}`, {
+  const res = await fetch(`${BACKEND}/api/ai/chat`, {
     method: 'POST',
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ message })
   })
+
+  if (res.status === 401) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('odoo_user')
+    window.location.href = '/'
+    throw new Error('Session expired')
+  }
+
   if (!res.ok) throw new Error('Chat error')
 
   if (onChunk && res.body) {
@@ -418,8 +431,11 @@ export async function sendChat(message, onChunk) {
   return res.json()
 }
 
-export async function generateReport() {
-  return apiFetch('/ai/generate-report', { method: 'POST' })
+export async function generateReport(type = 'daily_summary') {
+  return apiFetch('/api/ai/generate-report', {
+    method: 'POST',
+    body: JSON.stringify({ type })
+  })
 }
 
 export async function checkHealth() {
@@ -428,19 +444,27 @@ export async function checkHealth() {
   return res.json()
 }
 
+// ─── User Preferences ─────────────────────────────────────────────────────────
+// ✅ Does NOT use apiFetch — never triggers logout on failure.
+// Called on every app load, so a transient 401 must not wipe the session.
 export async function getUserPreferences() {
+  const token = localStorage.getItem('token')
+  if (!token) return { theme: 'light' }  // no session yet, skip the call
+
   try {
-    const data = await apiFetch('/api/user/preferences')
-    return data
-  } catch (err) {
-    console.error('Failed to fetch preferences', err)
+    const res = await fetch(`${BACKEND}/api/user/preferences`, {
+      headers: getAuthHeaders()
+    })
+    if (!res.ok) return { theme: 'light' }  // fail silently, keep session alive
+    return res.json()
+  } catch {
     return { theme: 'light' }
   }
 }
 
 export async function updateUserPreferences(prefs) {
-  return apiFetch('/api/user/preferences', { 
-    method: 'PUT', 
-    body: JSON.stringify(prefs) 
+  return apiFetch('/api/user/preferences', {
+    method: 'PUT',
+    body: JSON.stringify(prefs)
   })
 }
