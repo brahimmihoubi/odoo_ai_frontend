@@ -117,12 +117,13 @@ The application will be accessible at `http://localhost:3000`.
 ## Configuration
 
 ### API Endpoints
-Currently, the backend URL is configured within `src/lib/api.js`. If your backend is hosted on a different port or remote server, update the `BACKEND` constant:
+The backend URL is dynamically configured using environment variables. To connect the frontend to your FastAPI backend, create a `.env` file in the root directory (you can copy `.env.example`) and set the base URL:
 
-```javascript
-// src/lib/api.js
-const BACKEND = "http://localhost:8000"
+```env
+# .env
+VITE_API_BASE_URL=http://localhost:8000
 ```
+By default, if the `.env` file is missing, the application will fallback to `http://localhost:8000`.
 
 ### Vite Configuration
 The Vite bundler is configured in `vite.config.js`. It includes configurations to run the server on port `3000` and disables the HMR error overlay to prevent crash screens during background execution.
